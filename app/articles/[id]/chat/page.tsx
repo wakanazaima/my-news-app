@@ -1,9 +1,14 @@
 'use client'
 import { useState, use } from 'react'
 
-export default function ChatPage({ params }: any) {
+interface Message {
+  role: string
+  content: string
+}
+
+export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const [messages, setMessages] = useState<{ role: string; content: string }[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
 
