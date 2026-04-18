@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { summarizeArticle } from '@/lib/gemini'
+import Parser from 'rss-parser'
+import { RSS_SOURCES } from '@/lib/rss-sources'
 
-const NEWSAPI_KEY = process.env.NEWSAPI_KEY
-const CATEGORIES = ['business', 'science', 'health']
+const parser = new Parser()
 
 function wait(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -13,29 +14,31 @@ export async function POST() {
   try {
     const articles = []
 
-    for (const category of CATEGORIES) {
-      const res = await fetch(
-        `https://newsapi.org/v2/top-headlines?category=${category}&language=en&pageSize=3&apiKey=${NEWSAPI_KEY}`
-      )
-      const data = await res.json()
-      if (data.articles) {
-        for (const a of data.articles) {
-          const summary = await summarizeArticle(
-            a.title ?? '',
-            a.description ?? ''
-          )
- articles.push({
-  title: a.title,
-  url: a.url,
-  source_name: a.source?.name,
-  content: a.description,
-  summary_ai: summary,
-  image_url: a.urlToImage,
-  published_at: a.publishedAt,
-  category: category,
-})
-          await wait(5000)
+    for (const source of RSS_SOURCES) {
+      try {
+        const feed = await parser.parseURL(source.url)
+        const items = feed.items.slice(0, 3)
+
+        for (const item of items) {
+          const title = item.title ?? ''
+          const content = item.contentSnippet ?? item.content ?? ''
+          const summary = await summarizeArticle(title, content)
+
+          articles.push({
+            title,
+            url: item.link ?? '',
+            source_name: source.label,
+            content,
+            summary_ai: summary,
+            image_url: null,
+            published_at: item.pubDate ? new Date(item.pubDate).toISOString() : null,
+            category: source.category,
+          })
+
+          await wait(8000)
         }
+      } catch (e) {
+        console.error(`Failed to fetch ${source.url}:`, e)
       }
     }
 
