@@ -16,12 +16,28 @@ export default function Home() {
   const [selected, setSelected] = useState('all')
   const [loading, setLoading] = useState(true)
 
+  const [logs, setLogs] = useState<any[]>([])
+
+async function logView(articleId: string) {
+  await fetch('/api/logs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ articleId }),
+  })
+}
+
   useEffect(() => {
     setLoading(true)
     fetch('/api/articles' + (selected !== 'all' ? `?category=${selected}` : ''))
       .then(r => r.json())
       .then(data => { setArticles(data.articles ?? []); setLoading(false) })
   }, [selected])
+
+useEffect(() => {
+  fetch('/api/logs')
+    .then(r => r.json())
+    .then(data => setLogs(data.logs ?? []))
+}, [])
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0f0f0f', fontFamily: '-apple-system, sans-serif' }}>
@@ -57,6 +73,19 @@ export default function Home() {
             {cat.label}
           </button>
         ))}
+        <div style={{ marginTop: '24px', borderTop: '1px solid #1f1f1f', paddingTop: '16px' }}>
+          <div style={{ fontSize: '10px', color: '#4b5563', padding: '0 16px', marginBottom: '8px', letterSpacing: '0.08em' }}>
+            最近読んだ記事
+          </div>
+          {logs.length === 0 ? (
+            <div style={{ fontSize: '12px', color: '#4b5563', padding: '0 16px' }}>まだありません</div>
+          ) : (
+            logs.map((log: any, i: number) => (
+              
+              <a key={i} href={`/articles/${log.article_id}/chat`} style={{ display: 'block', padding: '8px 16px', fontSize: '12px', color: '#6b7280', textDecoration: 'none', lineHeight: '1.4' }}>{log.articles?.title?.slice(0, 30)}...</a>
+            ))
+          )}
+        </div>
       </aside>
 
       <main style={{ flex: 1, padding: '24px', maxWidth: '800px' }}>
@@ -90,9 +119,9 @@ export default function Home() {
                 )}
                 <div style={{ display: 'flex', gap: '8px' }}>
                   
-                  <a href={article.url} target="_blank" style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', border: '1px solid #3a3a3a', color: '#9ca3af', background: '#222', textDecoration: 'none' }}>元記事を読む</a>
+                  <a href={article.url} target="_blank" onClick={() => logView(article.id)} style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', border: '1px solid #3a3a3a', color: '#9ca3af', background: '#222', textDecoration: 'none' }}>元記事を読む</a>
                   
-                 <a href={`/articles/${article.id}/chat`} style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', background: '#1e3a8a', color: '#93c5fd', border: '1px solid #1e40af', textDecoration: 'none' }}>詳細を見る</a>             </div>
+                 <a href={`/articles/${article.id}/chat`} onClick={() => logView(article.id)} style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', background: '#1e3a8a', color: '#93c5fd', border: '1px solid #1e40af', textDecoration: 'none' }}>詳細を見る</a>             </div>
               </div>
             ))}
           </div>
