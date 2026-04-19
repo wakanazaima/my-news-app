@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { summarizeArticle } from '@/lib/gemini'
+import { summarizeArticle, explainArticle, generateReactions } from '@/lib/gemini'
 import Parser from 'rss-parser'
 import { RSS_SOURCES } from '@/lib/rss-sources'
 
@@ -17,12 +17,18 @@ export async function POST() {
     for (const source of RSS_SOURCES) {
       try {
         const feed = await parser.parseURL(source.url)
-        const items = feed.items.slice(0, 3)
+        const items = feed.items.slice(0, 2)
 
         for (const item of items) {
           const title = item.title ?? ''
           const content = item.contentSnippet ?? item.content ?? ''
+
           const summary = await summarizeArticle(title, content)
+          await wait(8000)
+          const explanation = await explainArticle(title, content)
+          await wait(8000)
+          const reactions = await generateReactions(title, content)
+          await wait(8000)
 
           articles.push({
             title,
@@ -30,12 +36,11 @@ export async function POST() {
             source_name: source.label,
             content,
             summary_ai: summary,
+            explanation_ai: explanation + '\n\n---reactions---\n' + reactions,
             image_url: null,
             published_at: item.pubDate ? new Date(item.pubDate).toISOString() : null,
             category: source.category,
           })
-
-          await wait(8000)
         }
       } catch (e) {
         console.error(`Failed to fetch ${source.url}:`, e)

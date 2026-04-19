@@ -92,7 +92,7 @@ export default function Home() {
                   
                   <a href={article.url} target="_blank" style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', border: '1px solid #3a3a3a', color: '#9ca3af', background: '#222', textDecoration: 'none' }}>元記事を読む</a>
                   
-                 <a href={`/articles/${article.id}/chat`} style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', background: '#1e3a8a', color: '#93c5fd', border: '1px solid #1e40af', textDecoration: 'none' }}>深掘りチャット</a>              </div>
+                 <a href={`/articles/${article.id}/chat`} style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', background: '#1e3a8a', color: '#93c5fd', border: '1px solid #1e40af', textDecoration: 'none' }}>詳細を見る</a>             </div>
               </div>
             ))}
           </div>
