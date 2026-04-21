@@ -18,6 +18,8 @@ export default function Home() {
   const [logs, setLogs] = useState<any[]>([])
   const [updating, setUpdating] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -28,10 +30,22 @@ export default function Home() {
 
   useEffect(() => {
     setLoading(true)
-    fetch('/api/articles' + (selected !== 'all' ? `?category=${selected}` : ''))
-      .then(r => r.json())
-      .then(data => { setArticles(data.articles ?? []); setLoading(false) })
+    setPage(1)
   }, [selected])
+
+  useEffect(() => {
+    setLoading(true)
+    const params = new URLSearchParams()
+    if (selected !== 'all') params.set('category', selected)
+    params.set('page', String(page))
+    fetch('/api/articles?' + params.toString())
+      .then(r => r.json())
+      .then(data => {
+        setArticles(data.articles ?? [])
+        setTotalPages(data.totalPages ?? 1)
+        setLoading(false)
+      })
+  }, [selected, page])
 
   useEffect(() => {
     fetch('/api/logs')
@@ -42,9 +56,15 @@ export default function Home() {
   async function fetchArticles() {
     setUpdating(true)
     fetch('/api/articles/fetch', { method: 'POST' }).then(() => {
-      fetch('/api/articles' + (selected !== 'all' ? `?category=${selected}` : ''))
+      const params = new URLSearchParams()
+      if (selected !== 'all') params.set('category', selected)
+      params.set('page', '1')
+      fetch('/api/articles?' + params.toString())
         .then(r => r.json())
-        .then(data => setArticles(data.articles ?? []))
+        .then(data => {
+          setArticles(data.articles ?? [])
+          setTotalPages(data.totalPages ?? 1)
+        })
     })
     setTimeout(() => setUpdating(false), 3000)
   }
@@ -160,33 +180,53 @@ export default function Home() {
         ) : articles.length === 0 ? (
           <p style={{ color: '#6b7280', fontSize: '14px' }}>記事がありません</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {articles.map((article: any) => (
-              <div key={article.id} style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '10px', padding: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '11px', color: '#6b7280' }}>{article.source_name}</span>
-                  <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', background: '#1a1a2e', color: '#818cf8' }}>
-                    {CATEGORIES.find(c => c.key === article.category)?.label ?? article.category}
-                  </span>
-                </div>
-                <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#f1f1f1', marginBottom: '10px', lineHeight: '1.4' }}>
-                  {article.title}
-                </h2>
-                {article.summary_ai && article.summary_ai !== '要約できませんでした' && (
-                  <div style={{ background: '#0d0d2b', borderLeft: '3px solid #558aff', borderRadius: '0 6px 6px 0', padding: '10px 12px', marginBottom: '12px' }}>
-                    <div style={{ fontSize: '10px', color: '#558aff', marginBottom: '4px', fontWeight: 500 }}>AI要約</div>
-                    <div style={{ fontSize: '12px', color: '#a5b4fc', lineHeight: '1.7', whiteSpace: 'pre-line' }}>
-                      {article.summary_ai}
-                    </div>
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {articles.map((article: any) => (
+                <div key={article.id} style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '10px', padding: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#6b7280' }}>{article.source_name}</span>
+                    <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', background: '#1a1a2e', color: '#818cf8' }}>
+                      {CATEGORIES.find(c => c.key === article.category)?.label ?? article.category}
+                    </span>
                   </div>
-                )}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <a href={article.url} target="_blank" onClick={() => logView(article.id)} style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', border: '1px solid #3a3a3a', color: '#9ca3af', background: '#222', textDecoration: 'none' }}>元記事を読む</a>
-                  <a href={`/articles/${article.id}/chat`} onClick={() => logView(article.id)} style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', background: '#1e3a8a', color: '#93c5fd', border: '1px solid #1e40af', textDecoration: 'none' }}>詳細を見る</a>
+                  <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#f1f1f1', marginBottom: '10px', lineHeight: '1.4' }}>
+                    {article.title}
+                  </h2>
+                  {article.summary_ai && article.summary_ai !== '要約できませんでした' && (
+                    <div style={{ background: '#0d0d2b', borderLeft: '3px solid #558aff', borderRadius: '0 6px 6px 0', padding: '10px 12px', marginBottom: '12px' }}>
+                      <div style={{ fontSize: '10px', color: '#558aff', marginBottom: '4px', fontWeight: 500 }}>AI要約</div>
+                      <div style={{ fontSize: '12px', color: '#a5b4fc', lineHeight: '1.7', whiteSpace: 'pre-line' }}>
+                        {article.summary_ai}
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <a href={article.url} target="_blank" onClick={() => logView(article.id)} style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', border: '1px solid #3a3a3a', color: '#9ca3af', background: '#222', textDecoration: 'none' }}>元記事を読む</a>
+                    <a href={`/articles/${article.id}/chat`} onClick={() => logView(article.id)} style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '6px', background: '#1e3a8a', color: '#93c5fd', border: '1px solid #1e40af', textDecoration: 'none' }}>詳細を見る</a>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '24px' }}>
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                style={{ padding: '8px 16px', background: page === 1 ? '#1a1a1a' : '#222', color: page === 1 ? '#4b5563' : '#9ca3af', border: '1px solid #2a2a2a', borderRadius: '6px', fontSize: '13px', cursor: page === 1 ? 'not-allowed' : 'pointer' }}
+              >
+                前のページ
+              </button>
+              <span style={{ fontSize: '13px', color: '#6b7280' }}>{page} / {totalPages}</span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                style={{ padding: '8px 16px', background: page === totalPages ? '#1a1a1a' : '#222', color: page === totalPages ? '#4b5563' : '#9ca3af', border: '1px solid #2a2a2a', borderRadius: '6px', fontSize: '13px', cursor: page === totalPages ? 'not-allowed' : 'pointer' }}
+              >
+                次のページ
+              </button>
+            </div>
+          </>
         )}
       </main>
     </div>
