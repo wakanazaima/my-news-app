@@ -58,3 +58,6 @@ export async function POST() {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
+export async function GET() {
+  return POST()
+}
