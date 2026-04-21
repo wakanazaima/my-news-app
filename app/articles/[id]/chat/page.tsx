@@ -13,6 +13,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [tab, setTab] = useState<'chat' | 'explain' | 'reactions'>('chat')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     fetch(`/api/articles/${id}`)
@@ -49,21 +57,32 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0f0f0f', fontFamily: '-apple-system, sans-serif' }}>
-      <aside style={{ width: '180px', background: '#0a0a0a', borderRight: '1px solid #1f1f1f', padding: '20px 0', flexShrink: 0 }}>
-        <div style={{ padding: '0 16px 20px', borderBottom: '1px solid #1f1f1f', marginBottom: '12px' }}>
-          <span style={{ fontSize: '18px', fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
-            My<span style={{ color: '#558aff' }}>News</span>
-          </span>
-        </div>
-        <a href="/" style={{ display: 'block', padding: '9px 16px', fontSize: '13px', color: '#6b7280', textDecoration: 'none' }}>一覧へ戻る</a>
-      </aside>
+      {!isMobile && (
+        <aside style={{ width: '180px', background: '#0a0a0a', borderRight: '1px solid #1f1f1f', padding: '20px 0', flexShrink: 0 }}>
+          <div style={{ padding: '0 16px 20px', borderBottom: '1px solid #1f1f1f', marginBottom: '12px' }}>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
+              My<span style={{ color: '#558aff' }}>News</span>
+            </span>
+          </div>
+          <a href="/" style={{ display: 'block', padding: '9px 16px', fontSize: '13px', color: '#6b7280', textDecoration: 'none' }}>一覧へ戻る</a>
+        </aside>
+      )}
 
-      <main style={{ flex: 1, padding: '24px', maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <main style={{ flex: 1, padding: isMobile ? '16px' : '24px', maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+        {isMobile && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
+              My<span style={{ color: '#558aff' }}>News</span>
+            </span>
+            <a href="/" style={{ fontSize: '13px', color: '#6b7280', textDecoration: 'none' }}>一覧へ戻る</a>
+          </div>
+        )}
 
         {article && (
           <div style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '10px', padding: '16px' }}>
             <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '6px' }}>{article.source_name}</div>
-            <h1 style={{ fontSize: '16px', fontWeight: 700, color: '#f1f1f1', marginBottom: '10px', lineHeight: '1.4' }}>
+            <h1 style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: 700, color: '#f1f1f1', marginBottom: '10px', lineHeight: '1.4' }}>
               {article.title}
             </h1>
             {article.summary_ai && article.summary_ai !== '要約できませんでした' && (
@@ -75,20 +94,21 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid #2a2a2a', paddingBottom: '0' }}>
+        <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid #2a2a2a', overflowX: 'auto' }}>
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key as any)}
               style={{
-                padding: '10px 16px',
-                fontSize: '13px',
+                padding: isMobile ? '8px 10px' : '10px 16px',
+                fontSize: isMobile ? '12px' : '13px',
                 background: 'transparent',
                 border: 'none',
                 borderBottom: tab === t.key ? '2px solid #558aff' : '2px solid transparent',
                 color: tab === t.key ? '#fff' : '#6b7280',
                 cursor: 'pointer',
                 fontWeight: tab === t.key ? 500 : 400,
+                whiteSpace: 'nowrap',
               }}
             >
               {t.label}
@@ -98,7 +118,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
         {tab === 'chat' && (
           <>
-            <div style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '10px', padding: '16px', flex: 1, minHeight: '300px' }}>
+            <div style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '10px', padding: '16px', flex: 1, minHeight: '250px' }}>
               {messages.length === 0 && (
                 <p style={{ color: '#4b5563', fontSize: '14px' }}>この記事について何でも質問してください</p>
               )}
@@ -108,7 +128,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     maxWidth: '80%',
                     padding: '10px 14px',
                     borderRadius: '8px',
-                    fontSize: '14px',
+                    fontSize: isMobile ? '13px' : '14px',
                     lineHeight: '1.6',
                     background: m.role === 'user' ? '#1e3a8a' : '#222',
                     color: m.role === 'user' ? '#93c5fd' : '#e5e7eb',

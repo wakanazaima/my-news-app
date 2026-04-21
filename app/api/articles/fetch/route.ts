@@ -17,7 +17,7 @@ export async function POST() {
     for (const source of RSS_SOURCES) {
       try {
         const feed = await parser.parseURL(source.url)
-        const items = feed.items.slice(0, 2)
+        const items = feed.items.slice(0, 1)
 
         for (const item of items) {
           const title = item.title ?? ''
