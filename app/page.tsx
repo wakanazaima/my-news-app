@@ -3,14 +3,13 @@ import { useState, useEffect } from 'react'
 
 const CATEGORIES = [
   { key: 'all', label: 'すべて' },
-  { key: 'world', label: '国際' },
-  { key: 'business', label: 'ビジネス' },
+  { key: 'world', label: '国際情勢' },
+  { key: 'business', label: '経済・企業' },
+  { key: 'beauty', label: '化粧品・美容' },
   { key: 'technology', label: 'テクノロジー' },
   { key: 'science', label: 'サイエンス' },
   { key: 'health', label: '健康' },
-  { key: 'ai', label: 'AI' },
 ]
-
 export default function Home() {
   const [articles, setArticles] = useState<any[]>([])
   const [selected, setSelected] = useState('all')
